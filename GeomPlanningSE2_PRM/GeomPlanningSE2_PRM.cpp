@@ -1,4 +1,11 @@
+/*
+Compile: g++ -g -Wall -O2 -march=i686 GeomPlanningSE2_PRM.cpp -I ~/prg/ompl/app/ompl/src -I ~/prg/ompl/app/src -L ~/prg/ompl/app/build/lib -lompl -Wl,-rpath ~/prg/ompl/app/build/lib -lboost_thread
+Execution: ./a.out
+Visualize: plot "path.dat" (sequence of x,y,yaw)
+*/
+
 #include <ompl/geometric/SimpleSetup.h>
+#include <ompl/geometric/planners/prm/PRM.h>
 #include <ompl/base/spaces/SE2StateSpace.h>
 #include <cmath>
 #include <iostream>
@@ -10,7 +17,7 @@ namespace og = ompl::geometric;
 // Return true if the state is valid, false if the state is invalid
 bool isStateValid(const ob::State *state)
 {
-  const ob::SE2StateSpace::StateType *state_2d = state->as<ob::SE2StateSpace::StateType>();
+  const ob::SE2StateSpace::StateType *state_2d= state->as<ob::SE2StateSpace::StateType>();
   const double &x(state_2d->getX()), &y(state_2d->getY());
   // State is invalid when it is inside a 1x1 box
   // centered at the origin:
@@ -46,6 +53,9 @@ void planWithSimpleSetup(void)
   std::cout << "goal: "; goal.print(std::cout);
 
   ss.setStartAndGoalStates(start, goal);
+
+  ob::PlannerPtr planner(new og::PRM(ss.getSpaceInformation()));
+  ss.setPlanner(planner);
 
   std::cout << "----------------" << std::endl;
 
