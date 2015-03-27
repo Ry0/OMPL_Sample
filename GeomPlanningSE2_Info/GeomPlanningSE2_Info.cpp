@@ -19,6 +19,57 @@ Visualize: plot the following files:
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
+double* xMin;
+double* xMax;
+double* yMin;
+double* yMax;
+/// Number of obstacles in space.
+int numObstacles;
+/// Start position in space
+double xStart;
+double yStart;
+/// Goal position in space
+double xGoal;
+double yGoal;
+/// Max. distance toward each sampled position we
+/// should grow our tree
+double stepSize;
+/// Boundaries of the space
+double xLeft;
+double xRight;
+double yTop;
+double yBottom;
+
+void initFromFile(std::string fileName)
+{
+  std::ifstream input(fileName.c_str());
+
+  input >> xLeft >> xRight >> yBottom >> yTop >> numObstacles;
+
+  xMin = new double[numObstacles];
+  xMax = new double[numObstacles];
+  yMin = new double[numObstacles];
+  yMax = new double[numObstacles];
+
+  for (int i = 0; i < numObstacles; ++i){
+    input >> xMin[i] >> xMax[i] >> yMin[i] >> yMax[i];
+  }
+
+  input >> xStart >> yStart >> xGoal >> yGoal >> stepSize;
+
+  input.close();
+
+  printf("\nフィールドの定義域は: x[%5.2lf, %5.2lf] y[%5.2lf, %5.2lf]\n", xLeft, xRight, yBottom, yTop);
+
+  std::cout << "障害物リスト" << std::endl;
+  for (int i = 0; i < numObstacles; ++i){
+    printf("             障害物%d: x[%5.2lf, %5.2lf] y[%5.2lf, %5.2lf]\n", i+1, xMin[i], xMax[i], yMin[i], yMax[i]);
+  }
+
+  printf("\nスタートとゴール    : Start[%5.2lf, %5.2lf]\n", xStart, yStart);
+  printf("                        End[%5.2lf, %5.2lf]\n\n", xGoal, yGoal);
+}
+
 // Return true if the state is valid, false if the state is invalid
 bool isStateValid(const ob::State *state)
 {
@@ -26,8 +77,11 @@ bool isStateValid(const ob::State *state)
   const double &x(state_2d->getX()), &y(state_2d->getY());
   // State is invalid when it is inside a 1x1 box
   // centered at the origin:
-  if(std::fabs(x)<0.5 && std::fabs(y)<0.5)
-    return false;
+  for (int i = 0; i < numObstacles; ++i){
+    if (x >= xMin[i] && x <= xMax[i] && y >= yMin[i] && y <= yMax[i]){
+      return false;
+    }
+  }
   // Otherwise, the state is valid:
   return true;
 }
@@ -49,8 +103,10 @@ void planWithSimpleSetup(void)
   ob::StateSpacePtr space(new ob::SE2StateSpace());
 
   ob::RealVectorBounds bounds(2);
-  bounds.setLow(-1);
-  bounds.setHigh(1);
+  bounds.setLow(0,xLeft);
+  bounds.setHigh(0,xRight);
+  bounds.setLow(1,yBottom);
+  bounds.setHigh(1,21.1);
   space->as<ob::SE2StateSpace>()->setBounds(bounds);
 
   // Instantiate SimpleSetup
@@ -61,11 +117,11 @@ void planWithSimpleSetup(void)
 
   // Setup Start and Goal
   ob::ScopedState<ob::SE2StateSpace> start(space);
-  start->setXY(-0.9,-0.9);
+  start->setXY(xStart,yStart);
   std::cout << "start: "; start.print(std::cout);
 
   ob::ScopedState<ob::SE2StateSpace> goal(space);
-  goal->setXY(0.9,0.9);
+  goal->setXY(xGoal,yGoal);
   std::cout << "goal: "; goal.print(std::cout);
 
   ss.setStartAndGoalStates(start, goal);
@@ -130,6 +186,7 @@ void planWithSimpleSetup(void)
 
 int main()
 {
+  initFromFile("../plot/testcase1.dat");
   planWithSimpleSetup();
   return 0;
 }
