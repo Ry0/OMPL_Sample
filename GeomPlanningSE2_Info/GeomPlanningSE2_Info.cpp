@@ -9,7 +9,7 @@ Visualize: plot the following files:
 */
 
 #include <ompl/geometric/SimpleSetup.h>
-// #include <ompl/geometric/planners/prm/PRM.h>
+// #include <ompl/geometric/planners/prm/PRM.h> //PRMプランナを使う場合こっちをインクルード
 #include <ompl/geometric/planners/rrt/RRTstar.h>
 #include <ompl/base/spaces/SE2StateSpace.h>
 #include <ompl/base/PlannerData.h>
@@ -78,8 +78,7 @@ bool isStateValid(const ob::State *state)
 {
   const ob::SE2StateSpace::StateType *state_2d= state->as<ob::SE2StateSpace::StateType>();
   const double &x(state_2d->getX()), &y(state_2d->getY());
-  // State is invalid when it is inside a 1x1 box
-  // centered at the origin:
+
   for (int i = 0; i < numObstacles; ++i){
     if (x >= xMin[i] && x <= xMax[i] && y >= yMin[i] && y <= yMax[i]){
       return false;
@@ -94,10 +93,12 @@ bool isStateValid(const ob::State *state)
 void printEdge(std::ostream &os, const ob::StateSpacePtr &space, const ob::PlannerDataVertex &vertex)
 {
   std::vector<double> reals;
-  if(vertex!=ob::PlannerData::NO_VERTEX)
+  if(vertex!=ob::PlannerData::NO_VERTEX)// 頂点が存在しない状態じゃなかったら
   {
-    space->copyToReals(reals, vertex.getState());
-    for(size_t j(0); j<reals.size(); ++j)  os<<" "<<reals[j];
+    space->copyToReals(reals, vertex.getState());// Copy all the real values from a state source to the array reals using getValueAddressAtLocation()
+    for(size_t j = 0; j < reals.size(); ++j){
+      os << " " << reals[j];
+    }
   }
 }
 
