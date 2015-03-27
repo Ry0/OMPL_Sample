@@ -13,6 +13,5 @@ set size square
 
 plot "testcase1_obstacle.dat" using 1:2 with filledcurves lt rgb "#ff0033" fill solid 0.5 notitle,\
 'edges.dat' using 1:2 with lines lt 1 lc rgb "#728470" lw 0.5 title 'edges',\
-'vertices.dat' using 1:2 with points pt 7 ps 1 lt rgb "#5BBC77" title 'Vertices',\
 'path.dat' using 1:2 with lines lt 1 lc rgb "#191970" lw 2 title 'Path',\
 'path0.dat' using 1:2 with lines lt 1 lc rgb "#ff4500" lw 2 title 'Path0'

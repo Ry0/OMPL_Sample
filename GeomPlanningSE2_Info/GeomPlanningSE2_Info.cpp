@@ -41,6 +41,7 @@ double xRight;
 double yTop;
 double yBottom;
 
+
 void initFromFile(std::string fileName)
 {
   std::ifstream input(fileName.c_str());
@@ -71,6 +72,7 @@ void initFromFile(std::string fileName)
   printf("                        End[%5.2lf, %5.2lf]\n\n", xGoal, yGoal);
 }
 
+
 // Return true if the state is valid, false if the state is invalid
 bool isStateValid(const ob::State *state)
 {
@@ -87,6 +89,7 @@ bool isStateValid(const ob::State *state)
   return true;
 }
 
+
 // Print a vertex to file
 void printEdge(std::ostream &os, const ob::StateSpacePtr &space, const ob::PlannerDataVertex &vertex)
 {
@@ -97,6 +100,7 @@ void printEdge(std::ostream &os, const ob::StateSpacePtr &space, const ob::Plann
     for(size_t j(0); j<reals.size(); ++j)  os<<" "<<reals[j];
   }
 }
+
 
 void planWithSimpleSetup(void)
 {
@@ -184,6 +188,7 @@ void planWithSimpleSetup(void)
   else
     std::cout << "No solution found" << std::endl;
 }
+
 
 int main()
 {
