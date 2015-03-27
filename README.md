@@ -6,7 +6,7 @@ OMPLのサンプルを実行してみるだけのレポジトリ
 # プログラムの実行
 各プログラムのディレクトリに移動して
 
-```cpp
+```bash
 mkdir build
 cd build
 cmake ..
