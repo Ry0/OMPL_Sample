@@ -18,4 +18,4 @@ make
 まだ完全ではないので「develop」ブランチに  
 [https://github.com/Ry0/OMPL_Sample/tree/develop/GeomPlanningSE2_Info](https://github.com/Ry0/OMPL_Sample/tree/develop/GeomPlanningSE2_Info)  
 
-![simg/RRTstar.png](img/RRTstar.png)
+![img/RRTstar.png](./.img/RRTstar.png)
