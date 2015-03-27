@@ -9,7 +9,8 @@ Visualize: plot the following files:
 */
 
 #include <ompl/geometric/SimpleSetup.h>
-#include <ompl/geometric/planners/prm/PRM.h>
+// #include <ompl/geometric/planners/prm/PRM.h>
+#include <ompl/geometric/planners/rrt/RRT.h>
 #include <ompl/base/spaces/SE2StateSpace.h>
 #include <ompl/base/PlannerData.h>
 #include <cmath>
@@ -106,7 +107,7 @@ void planWithSimpleSetup(void)
   bounds.setLow(0,xLeft);
   bounds.setHigh(0,xRight);
   bounds.setLow(1,yBottom);
-  bounds.setHigh(1,21.1);
+  bounds.setHigh(1,yTop);
   space->as<ob::SE2StateSpace>()->setBounds(bounds);
 
   // Instantiate SimpleSetup
@@ -126,7 +127,7 @@ void planWithSimpleSetup(void)
 
   ss.setStartAndGoalStates(start, goal);
 
-  ob::PlannerPtr planner(new og::PRM(ss.getSpaceInformation()));
+  ob::PlannerPtr planner(new og::RRT(ss.getSpaceInformation()));
   ss.setPlanner(planner);
 
   std::cout << "----------------" << std::endl;
