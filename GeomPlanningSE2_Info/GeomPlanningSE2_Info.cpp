@@ -10,7 +10,7 @@ Visualize: plot the following files:
 
 #include <ompl/geometric/SimpleSetup.h>
 // #include <ompl/geometric/planners/prm/PRM.h>
-#include <ompl/geometric/planners/rrt/RRT.h>
+#include <ompl/geometric/planners/rrt/RRTstar.h>
 #include <ompl/base/spaces/SE2StateSpace.h>
 #include <ompl/base/PlannerData.h>
 #include <cmath>
@@ -127,7 +127,7 @@ void planWithSimpleSetup(void)
 
   ss.setStartAndGoalStates(start, goal);
 
-  ob::PlannerPtr planner(new og::RRT(ss.getSpaceInformation()));
+  ob::PlannerPtr planner(new og::RRTstar(ss.getSpaceInformation()));
   ss.setPlanner(planner);
 
   std::cout << "----------------" << std::endl;

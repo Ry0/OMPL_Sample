@@ -1,1 +1,11 @@
 build
+CMakeFiles
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+*.DS_Store
+*~
+edges.dat
+path.dat
+path0.dat
+vertices.dat
