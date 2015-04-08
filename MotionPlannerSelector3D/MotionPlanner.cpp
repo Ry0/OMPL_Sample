@@ -168,10 +168,14 @@ void Planning::planWithSimpleSetup()
   // Setup Start and Goal
   ob::ScopedState<ob::SE3StateSpace> start(space);
   start->setXYZ(xStart,yStart,zStart);
+  start->rotation().setIdentity();
+  // start.random();
   cout << "start: "; start.print(cout);
 
   ob::ScopedState<ob::SE3StateSpace> goal(space);
   goal->setXYZ(xGoal,yGoal,zGoal);
+  goal->rotation().setIdentity();
+  // goal.random();
   cout << "goal: "; goal.print(cout);
 
   ss.setStartAndGoalStates(start, goal);
@@ -274,6 +278,7 @@ void Planning::output_plt(std::string plt_output)
   plt << "set xrange [" << xLeft << ":" << xRight << "]" << endl;
   plt << "set yrange [" << yBottom << ":" << yTop << "]" << endl;
   plt << "set zrange [" << zBottom << ":" << zTop << "]" << endl;
+  plt << "set ticslevel 0" << endl;
   plt << "set key outside" << endl;
   plt << "set key top right" << endl;
   plt << "set size square" << endl;

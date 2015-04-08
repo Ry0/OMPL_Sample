@@ -69,74 +69,74 @@ bool isStateValid(const ob::State *state)
   return (const void *)rot != (const void *)pos;
 }
 
-void plan(void)
-{
-  // construct the state space we are planning in
-  ob::StateSpacePtr space(new ob::SE3StateSpace());
+// void plan(void)
+// {
+//   // construct the state space we are planning in
+//   ob::StateSpacePtr space(new ob::SE3StateSpace());
 
-  // set the bounds for the R^3 part of SE(3)
-  ob::RealVectorBounds bounds(3);
-  bounds.setLow(-1);
-  bounds.setHigh(1);
+//   // set the bounds for the R^3 part of SE(3)
+//   ob::RealVectorBounds bounds(3);
+//   bounds.setLow(-1);
+//   bounds.setHigh(1);
 
-  space->as<ob::SE3StateSpace>()->setBounds(bounds);
+//   space->as<ob::SE3StateSpace>()->setBounds(bounds);
 
-  // construct an instance of  space information from this state space
-  ob::SpaceInformationPtr si(new ob::SpaceInformation(space));
+//   // construct an instance of  space information from this state space
+//   ob::SpaceInformationPtr si(new ob::SpaceInformation(space));
 
-  // set state validity checking for this space
-  si->setStateValidityChecker(boost::bind(&isStateValid, _1));
+//   // set state validity checking for this space
+//   si->setStateValidityChecker(boost::bind(&isStateValid, _1));
 
-  // create a random start state
-  ob::ScopedState<> start(space);
-  start.random();
-  cout << "スタート地点: "; start.print(cout);
+//   // create a random start state
+//   ob::ScopedState<> start(space);
+//   start.random();
+//   cout << "スタート地点: "; start.print(cout);
 
-  // create a random goal state
-  ob::ScopedState<> goal(space);
-  goal.random();
-  cout << "ゴール地点: "; start.print(cout);
+//   // create a random goal state
+//   ob::ScopedState<> goal(space);
+//   goal.random();
+//   cout << "ゴール地点: "; start.print(cout);
 
-  // create a problem instance
-  ob::ProblemDefinitionPtr pdef(new ob::ProblemDefinition(si));
+//   // create a problem instance
+//   ob::ProblemDefinitionPtr pdef(new ob::ProblemDefinition(si));
 
-  // set the start and goal states
-  pdef->setStartAndGoalStates(start, goal);
+//   // set the start and goal states
+//   pdef->setStartAndGoalStates(start, goal);
 
-  // create a planner for the defined space
-  ob::PlannerPtr planner(new og::RRT(si));
+//   // create a planner for the defined space
+//   ob::PlannerPtr planner(new og::RRT(si));
 
-  // set the problem we are trying to solve for the planner
-  planner->setProblemDefinition(pdef);
+//   // set the problem we are trying to solve for the planner
+//   planner->setProblemDefinition(pdef);
 
-  // perform setup steps for the planner
-  planner->setup();
+//   // perform setup steps for the planner
+//   planner->setup();
 
-  // print the settings for this space
-  si->printSettings(std::cout);
+//   // print the settings for this space
+//   si->printSettings(std::cout);
 
-  // print the problem settings
-  pdef->print(std::cout);
+//   // print the problem settings
+//   pdef->print(std::cout);
 
-  cout << "----------------" << endl;
-  // attempt to solve the problem within one second of planning time
-  ob::PlannerStatus solved = planner->solve(1.0);
+//   cout << "----------------" << endl;
+//   // attempt to solve the problem within one second of planning time
+//   ob::PlannerStatus solved = planner->solve(1.0);
 
-  if (solved) {
-    cout << "----------------" << endl;
-    cout << "Found solution:" << endl;
-    // get the goal representation from the problem definition (not the same as the goal state)
-    // and inquire about the found path
-    ob::PathPtr path = pdef->getSolutionPath();
-    std::cout << "Found solution:" << std::endl;
+//   if (solved) {
+//     cout << "----------------" << endl;
+//     cout << "Found solution:" << endl;
+//     // get the goal representation from the problem definition (not the same as the goal state)
+//     // and inquire about the found path
+//     ob::PathPtr path = pdef->getSolutionPath();
+//     std::cout << "Found solution:" << std::endl;
 
-    // print the path to screen
-    path->print(std::cout);
+//     // print the path to screen
+//     path->print(std::cout);
 
-  } else {
-    std::cout << "No solution found" << std::endl;
-  }
-}
+//   } else {
+//     std::cout << "No solution found" << std::endl;
+//   }
+// }
 
 void planWithSimpleSetup(void)
 {
@@ -167,9 +167,13 @@ void planWithSimpleSetup(void)
   // set the start and goal states
   ss.setStartAndGoalStates(start, goal);
 
+  ob::PlannerPtr planner(new og::RRT(ss.getSpaceInformation()));
+  ss.setPlanner(planner);
+
   // this call is optional, but we put it in to get more output information
-  ss.setup();
-  ss.print();
+  // 多分いらんよね
+  // ss.setup();
+  // ss.print();
 
   // attempt to solve the problem within one second of planning time
   ob::PlannerStatus solved = ss.solve(1.0);
