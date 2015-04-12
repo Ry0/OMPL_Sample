@@ -309,7 +309,7 @@ void Planning::PrintSolution(const char *filename, const og::PathGeometric &path
         << " w l lt 1 lw 0.2 t '',"
         << "\\" << endl;
   }
-  ofs << "'frame_all.dat' w l lt 3, \\" << endl;
+  ofs << "'frame_all.dat' w l lt 3 lc rgb \"#888888\", \\" << endl;
   ofs << "'path.dat' w l lt 4" << endl;
 }
 
@@ -324,7 +324,7 @@ int Planning::OpenGnuplot()
     return -1;
   }
   fputs("set mouse\n", fp);
-  fputs("load \"plot.plt\"\n", fp);
+  fputs("load \"UAV.plt\"\n", fp);
 
   fflush(fp);
   cin.get();
