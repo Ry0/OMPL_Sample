@@ -3,7 +3,7 @@ OMPLのサンプルを実行してみるだけのレポジトリ
 ソースコードは以下のリンクを参考  
 [http://robotics.naist.jp/edu/text/?Robotics%2FOMPL#OMPLProgramming](http://robotics.naist.jp/edu/text/?Robotics%2FOMPL#OMPLProgramming)
 
-# プログラムの実行
+## プログラムの実行
 各プログラムのディレクトリに移動して
 
 ```bash
@@ -14,8 +14,13 @@ make
 ./実行ファイル名
 ```
 
-## RRTstarの実行結果
-まだ完全ではないので「develop」ブランチに  
-[https://github.com/Ry0/OMPL_Sample/tree/develop/GeomPlanningSE2_Info](https://github.com/Ry0/OMPL_Sample/tree/develop/GeomPlanningSE2_Info)  
+## 3次元空間のモーションプランニング
+![img/3Dmp.png](./img/3Dmp.png)
 
-![img/RRTstar.png](./img/RRTstar.png)
+## UAVのモーションプランニング
+課題はここから  
+[http://robotics.naist.jp/edu/text/?Robotics%2FExercise%2FOMPLProgramming](http://robotics.naist.jp/edu/text/?Robotics%2FExercise%2FOMPLProgramming)  
+
+![img/UAV.png](./img/UAV.png)
+
+## その他もろもろ
