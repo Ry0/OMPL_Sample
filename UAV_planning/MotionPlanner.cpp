@@ -90,26 +90,29 @@ void Planning::printEdge(std::ostream &os, const ob::StateSpacePtr &space, const
   std::vector<double> reals;
   if(vertex!=ob::PlannerData::NO_VERTEX)// 頂点が存在しない状態じゃなかったら
   {
-    space->copyToReals(reals, vertex.getState());// Copy all the real values from a state source to the array reals using getValueAddressAtLocation()
-    for(size_t j = 0; j < reals.size(); ++j){
+    space->copyToReals(reals, vertex.getState());  // Copy all the real values from a state source
+                                                   // to the array reals using
+                                                   // getValueAddressAtLocation()
+    for (size_t j = 0; j < reals.size(); ++j) {
       os << " " << reals[j];
     }
   }
 }
-
 
 void Planning::planWithSimpleSetup()
 {
   // Construct the state space where we are planning
   ob::StateSpacePtr space(new ob::SE3StateSpace());
 
+  int count = 0;
+
   ob::RealVectorBounds bounds(3);
-  bounds.setLow(0,xLeft);
-  bounds.setHigh(0,xRight);
-  bounds.setLow(1,yBottom);
-  bounds.setHigh(1,yTop);
-  bounds.setLow(2,zBottom);
-  bounds.setHigh(2,zTop);
+  bounds.setLow(0, xLeft);
+  bounds.setHigh(0, xRight);
+  bounds.setLow(1, yBottom);
+  bounds.setHigh(1, yTop);
+  bounds.setLow(2, zBottom);
+  bounds.setHigh(2, zTop);
   space->as<ob::SE3StateSpace>()->setBounds(bounds);
 
   // Instantiate SimpleSetup
@@ -123,41 +126,43 @@ void Planning::planWithSimpleSetup()
   // start->setXYZ(xStart,yStart,zStart);
   // start->rotation().setIdentity();
   start.random();
-  cout << "start: "; start.print(cout);
+  cout << "start: ";
+  start.print(cout);
 
   ob::ScopedState<ob::SE3StateSpace> goal(space);
   // goal->setXYZ(xGoal,yGoal,zGoal);
   // goal->rotation().setIdentity();
   goal.random();
-  cout << "goal: "; goal.print(cout);
+  cout << "goal: ";
+  goal.print(cout);
 
   ss.setStartAndGoalStates(start, goal);
 
-  if(selector == 1){
+  if (selector == 1) {
     ob::PlannerPtr planner(new og::PRM(ss.getSpaceInformation()));
     ss.setPlanner(planner);
-  }else if(selector == 2){
+  } else if (selector == 2) {
     ob::PlannerPtr planner(new og::RRT(ss.getSpaceInformation()));
     ss.setPlanner(planner);
-  }else if(selector == 3){
+  } else if (selector == 3) {
     ob::PlannerPtr planner(new og::RRTConnect(ss.getSpaceInformation()));
     ss.setPlanner(planner);
-  }else if(selector == 4){
+  } else if (selector == 4) {
     ob::PlannerPtr planner(new og::RRTstar(ss.getSpaceInformation()));
     ss.setPlanner(planner);
-  }else if(selector == 5){
+  } else if (selector == 5) {
     ob::PlannerPtr planner(new og::LBTRRT(ss.getSpaceInformation()));
     ss.setPlanner(planner);
-  }else if(selector == 6){
+  } else if (selector == 6) {
     ob::PlannerPtr planner(new og::LazyRRT(ss.getSpaceInformation()));
     ss.setPlanner(planner);
-  }else if(selector == 7){
+  } else if (selector == 7) {
     ob::PlannerPtr planner(new og::TRRT(ss.getSpaceInformation()));
     ss.setPlanner(planner);
-  }else if(selector == 8){
+  } else if (selector == 8) {
     ob::PlannerPtr planner(new og::pRRT(ss.getSpaceInformation()));
     ss.setPlanner(planner);
-  }else if(selector == 9){
+  } else if (selector == 9) {
     ob::PlannerPtr planner(new og::EST(ss.getSpaceInformation()));
     ss.setPlanner(planner);
   }
@@ -165,60 +170,64 @@ void Planning::planWithSimpleSetup()
   cout << "----------------" << endl;
 
   // Execute the planning algorithm
-  ob::PlannerStatus solved = ss.solve(10);
+  ob::PlannerStatus solved = ss.solve(20);
 
-  // If we have a solution,
-  if (solved)
-  {
-    // Print the solution path (that is not simplified yet) to a file
-    std::ofstream ofs0("../plot/path0.dat");
-    ss.getSolutionPath().printAsMatrix(ofs0);
+  while (1) {
+    // If we have a solution,
+    if (solved) {
+      // Print the solution path (that is not simplified yet) to a file
+      std::ofstream ofs0("../plot/path0.dat");
+      ss.getSolutionPath().printAsMatrix(ofs0);
 
-    // Simplify the solution
-    ss.simplifySolution();
-    cout << "----------------" << endl;
-    cout << "Found solution:" << endl;
-    // Print the solution path to screen
-    ss.getSolutionPath().print(cout);
+      // Simplify the solution
+      ss.simplifySolution();
+      cout << "----------------" << endl;
+      cout << "Found solution:" << endl;
+      // Print the solution path to screen
+      ss.getSolutionPath().print(cout);
 
-    // Print the solution path to a file
-    std::ofstream ofs("../plot/path.dat");
-    ss.getSolutionPath().printAsMatrix(ofs);
-    // PrintBoxSequence("../plot/UAV.dat", ss.getSolutionPath());
-    PrintSolution("../plot/UAV.plt", ss.getSolutionPath());
+      // Print the solution path to a file
+      std::ofstream ofs("../plot/path.dat");
+      ss.getSolutionPath().printAsMatrix(ofs);
+      PrintBoxSequence("../plot/UAV.dat", ss.getSolutionPath());
+      PrintSolution("../plot/UAV.plt", ss.getSolutionPath());
 
-    // Get the planner data to visualize the vertices and the edges
-    ob::PlannerData pdat(ss.getSpaceInformation());
-    ss.getPlannerData(pdat);
+      // Get the planner data to visualize the vertices and the edges
+      ob::PlannerData pdat(ss.getSpaceInformation());
+      ss.getPlannerData(pdat);
 
-    // Print the vertices to file
-    std::ofstream ofs_v("../plot/vertices.dat");
-    for(unsigned int i(0); i<pdat.numVertices(); ++i)
-    {
-      printEdge(ofs_v, ss.getStateSpace(), pdat.getVertex(i));
-      ofs_v<<endl;
-    }
+      // Print the vertices to file
+      std::ofstream ofs_v("../plot/vertices.dat");
+      for (unsigned int i(0); i < pdat.numVertices(); ++i) {
+        printEdge(ofs_v, ss.getStateSpace(), pdat.getVertex(i));
+        ofs_v << endl;
+      }
 
-    // Print the edges to file
-    std::ofstream ofs_e("../plot/edges.dat");
-    std::vector<unsigned int> edge_list;
-    for(unsigned int i(0); i<pdat.numVertices(); ++i)
-    {
-      unsigned int n_edge= pdat.getEdges(i,edge_list);
-      for(unsigned int i2(0); i2<n_edge; ++i2)
-      {
-        printEdge(ofs_e, ss.getStateSpace(), pdat.getVertex(i));
-        ofs_e<<endl;
-        printEdge(ofs_e, ss.getStateSpace(), pdat.getVertex(edge_list[i2]));
-        ofs_e<<endl;
-        ofs_e<<endl<<endl;
+      // Print the edges to file
+      std::ofstream ofs_e("../plot/edges.dat");
+      std::vector<unsigned int> edge_list;
+      for (unsigned int i(0); i < pdat.numVertices(); ++i) {
+        unsigned int n_edge = pdat.getEdges(i, edge_list);
+        for (unsigned int i2(0); i2 < n_edge; ++i2) {
+          printEdge(ofs_e, ss.getStateSpace(), pdat.getVertex(i));
+          ofs_e << endl;
+          printEdge(ofs_e, ss.getStateSpace(), pdat.getVertex(edge_list[i2]));
+          ofs_e<<endl;
+          ofs_e<<endl<<endl;
+        }
+      }
+      break;
+    } else {
+      cout << "No solution found" << endl;
+      count++;
+      if(count > 3){
+        cout << "全然経路見つからんし！" << endl;
+        break;
       }
     }
-  }
-  else
-    cout << "No solution found" << endl;
-}
 
+  }
+}
 
 /* Print every center shperes into a file "res/map.dat". */
 void Planning::PrintMap()
@@ -309,7 +318,7 @@ void Planning::PrintSolution(const char *filename, const og::PathGeometric &path
         << " w l lt 1 lw 0.2 t '',"
         << "\\" << endl;
   }
-  ofs << "'frame_all.dat' w l lt 3 lc rgb \"#888888\", \\" << endl;
+  ofs << "'frame_all.dat' w l lt 3, \\" << endl;
   ofs << "'path.dat' w l lt 4" << endl;
 }
 
