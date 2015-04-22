@@ -3,7 +3,6 @@
 
 #include "MotionPlanner.h"
 
-
 // Generate a vector with 3-dim
 inline TVector V3(const double &x, const double &y, const double &z)
 {

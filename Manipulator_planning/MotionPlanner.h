@@ -23,17 +23,17 @@
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
-typedef struct {
-  double xrange[2];
-  double yrange[2];
-  double zrange[2];
-} RANGE;
-
 template <typename T>
 inline T Sq(const T &x)
 {
   return x * x;
 }
+
+typedef struct {
+  double xrange[2];
+  double yrange[2];
+  double zrange[2];
+} RANGE;
 
 typedef boost::numeric::ublas::matrix<double> TMatrix;
 typedef boost::numeric::ublas::vector<double> TVector;
@@ -59,15 +59,13 @@ class Planning{
     int OpenGnuplot();
 
   private:
-    double SizeX = 6, SizeY = 5, SizeZ = 5;
-
     double RobotX = 0.5, RobotY = 0.4, RobotZ = 0.3;
     double RobotRadius = sqrt(0.25 * Sq(RobotX) + 0.25 * Sq(RobotY) +0.25 * Sq(RobotZ));
 
-    int selector;
-
   protected:
-    int num = 40;
+    double SizeX = 6, SizeY = 5, SizeZ = 5;
+    int selector;
+    int num = 5;
     std::vector<TVector> Obstacles;
     double ObstacleRadius = 0.5;
 
@@ -87,6 +85,8 @@ class Planning{
 class MPlanning:
   public Planning{
     public:
+      MPlanning(std::string fileName);
+      void planWithSimpleSetup();
       /* Compute the forward kinematics of a manipulator ``linkes''
       whose joint angles are specified by ``angles'',
       and the base position is ``base''.
@@ -107,9 +107,11 @@ class MPlanning:
       obstacles: stored into the resulting script.
       Usage:  gnuplot -persistent filename */
       void PrintArmSolution(const char *filename, const og::PathGeometric &path, int skip=1);
+
     private:
       std::vector<TLink> Arm;  // Manipulator
       TVector ArmBase;  // The base position of Manipulator
+      double total_len;
   };
 
 #endif
