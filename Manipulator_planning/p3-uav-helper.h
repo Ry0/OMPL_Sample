@@ -28,6 +28,7 @@ inline TMatrix QtoR(const double &qx, const double &qy, const double &qz, const 
   M(2, 2) = qw * qw - qx * qx - qy * qy + qz * qz;
   return M;
 }
+
 // Convert a OMPL's quaternion to a rotation matrix
 inline TMatrix QtoR(const ob::SO3StateSpace::StateType &rot)
 {

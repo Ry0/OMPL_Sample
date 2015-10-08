@@ -99,6 +99,7 @@ void Planning::printEdge(std::ostream &os, const ob::StateSpacePtr &space, const
   }
 }
 
+
 void Planning::planWithSimpleSetup()
 {
   // Construct the state space where we are planning

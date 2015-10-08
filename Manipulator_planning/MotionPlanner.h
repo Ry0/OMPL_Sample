@@ -11,7 +11,6 @@
 #include <ompl/geometric/planners/rrt/TRRT.h>
 #include <ompl/geometric/planners/rrt/pRRT.h>
 #include <ompl/geometric/planners/est/EST.h>
-
 #include <ompl/base/spaces/SE3StateSpace.h>
 #include <ompl/base/PlannerData.h>
 #include <cmath>
@@ -79,7 +78,6 @@ class Planning{
     double yBottom;
     double zTop;
     double zBottom;
-
 };
 
 class MPlanning:
