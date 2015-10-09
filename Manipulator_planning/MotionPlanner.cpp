@@ -104,18 +104,22 @@ void Planning::printEdge(std::ostream &os, const ob::StateSpacePtr &space, const
 void Planning::planWithSimpleSetup()
 {
   // Construct the state space where we are planning
-  ob::StateSpacePtr space(new ob::SE3StateSpace());
+  ob::StateSpacePtr space(new ob::RealVectorStateSpace());
 
   int count = 0;
 
-  ob::RealVectorBounds bounds(3);
-  bounds.setLow(0, xLeft);
-  bounds.setHigh(0, xRight);
-  bounds.setLow(1, yBottom);
-  bounds.setHigh(1, yTop);
-  bounds.setLow(2, zBottom);
-  bounds.setHigh(2, zTop);
-  space->as<ob::SE3StateSpace>()->setBounds(bounds);
+  ob::RealVectorBounds bounds(6);
+  // bounds.setLow(0, xLeft);
+  // bounds.setHigh(0, xRight);
+  // bounds.setLow(1, yBottom);
+  // bounds.setHigh(1, yTop);
+  // bounds.setLow(2, zBottom);
+  // bounds.setHigh(2, zTop);
+  for (int i = 0; i < 6; ++i){
+    bounds.setLow(i, 0);
+    bounds.setHigh(i, M_PI);
+  }
+  space->as<ob::RealVectorStateSpace>()->setBounds(bounds);
 
   // Instantiate SimpleSetup
   og::SimpleSetup ss(space);
@@ -124,14 +128,14 @@ void Planning::planWithSimpleSetup()
   ss.setStateValidityChecker(boost::bind(&Planning::isStateValid, this, _1));
 
   // Setup Start and Goal
-  ob::ScopedState<ob::SE3StateSpace> start(space);
+  ob::ScopedState<ob::RealVectorStateSpace> start(space);
   // start->setXYZ(xStart,yStart,zStart);
   // start->rotation().setIdentity();
   start.random();
   cout << "start: ";
   start.print(cout);
 
-  ob::ScopedState<ob::SE3StateSpace> goal(space);
+  ob::ScopedState<ob::RealVectorStateSpace> goal(space);
   // goal->setXYZ(xGoal,yGoal,zGoal);
   // goal->rotation().setIdentity();
   goal.random();
@@ -361,6 +365,7 @@ whose joint angles are specified by ``angles'',
 and the base position is ``base''.
 The result is stored into ``result'' that contains
 the base position and every position of the end-points.
+
 i.e. result.size()==linkes.size()+1 */
 void MPlanning::ForwardKinematics(const std::vector<TLink> &linkes,
                                   const std::vector<double> &angles, const TVector &base,
@@ -399,6 +404,20 @@ void MPlanning::PrintArmSequence(const char *filename, const og::PathGeometric &
         << endl;
   }
 }
+
+void MPlanning::CheckArmSequence()
+{
+  using namespace boost::numeric::ublas;
+  std::vector<double> angles(Arm.size());
+  std::vector<TVector> jpos;
+    // const ob::RealVectorStateSpace::StateType *s = path.getState(i)->as<ob::RealVectorStateSpace::StateType>();
+    for (size_t i(0); i < Arm.size(); ++i) angles[i] = i;
+    ForwardKinematics(Arm, angles, ArmBase, jpos);
+    for (size_t i(0); i < jpos.size(); ++i) cout << jpos[i] << endl;
+    cout << endl
+        << endl;
+}
+
 
 /* Print the planning result into a file.
    The resulting file is a gnuplot script that plots the path,

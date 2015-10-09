@@ -97,7 +97,7 @@ class MPlanning:
       The path should be a sequence of joint-angles.
       The parameter ``skip'' is an interval to sample from ``path'' (1 for every sample). */
       void PrintArmSequence(const char *filename, const og::PathGeometric &path, int skip=1);
-
+      void CheckArmSequence();
       /* Print the planning result into a file.
       The resulting file is a gnuplot script that plots the path,
       the sequence of the arm on the path, and the obstacles.
