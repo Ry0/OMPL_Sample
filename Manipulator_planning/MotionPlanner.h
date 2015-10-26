@@ -44,8 +44,7 @@ typedef struct {
 typedef boost::numeric::ublas::matrix<double> TMatrix;
 typedef boost::numeric::ublas::vector<double> TVector;
 
-struct TLink
-{
+struct TLink {
   TVector Axis;  // Joint axis
   TVector End;   // End-point position of the link defined on the local frame
   TLink(const TVector &a, const TVector &e) : Axis(a), End(e) {}
@@ -54,7 +53,10 @@ struct TLink
 class Planning{
   public:
     Planning(std::string fileName);
+    void SetArm();
     void PlannerSelector();
+    void initFromFile(std::string fileName);
+    void CreateCube(std::ostream &cube);
     bool clear(const double* xMin, const double* xMax,
                const double* yMin, const double* yMax,
                const double* zMin, const double* zMax,
@@ -71,32 +73,54 @@ class Planning{
               int numObstacles,
               double xStart, double yStart, double zStart,
               double xDest, double yDest, double zDest);
-    void printEdge(std::ostream &os, const ob::StateSpacePtr &space, const ob::PlannerDataVertex &vertex);
-    double distance_vertex(const TVector &p1, const TVector &p2);
-    double length_vector(const TVector &v);
-    TVector cross_vector(const TVector &vl, const TVector &vr);
-    double Distance_DotAndLine(const TVector &P, const TVector &A, const TVector &B);
-    void printDistance();
     bool isStateValid(const ob::State *state);
+    void ForwardKinematics(const std::vector<TLink> &linkes,
+                           const std::vector<double> &angles, const TVector &base,
+                           std::vector<TVector> &result);
+    void printEdge(std::ostream &os, const ob::StateSpacePtr &space, const ob::PlannerDataVertex &vertex);
+    // double distance_vertex(const TVector &p1, const TVector &p2);
+    // double length_vector(const TVector &v);
+    // TVector cross_vector(const TVector &vl, const TVector &vr);
+    // double Distance_DotAndLine(const TVector &P, const TVector &A, const TVector &B);
+    void printDistance();
     void planWithSimpleSetup();
-    void PrintMap();
-    void PrintBoxSequence(const char *filename, const og::PathGeometric &path, int skip = 1);
-    void PrintSolution(const char *filename, const og::PathGeometric &path, int skip = 1);
-    int OpenGnuplot();
 
-  private:
-    double RobotX = 0.5, RobotY = 0.4, RobotZ = 0.3;
-    double RobotRadius = sqrt(0.25 * Sq(RobotX) + 0.25 * Sq(RobotY) +0.25 * Sq(RobotZ));
+    void PrintSolution(const char *filename, const og::PathGeometric &path, int skip = 1);
+
+    int OpenGnuplot(const char *filename, const og::PathGeometric &path, int skip = 1);
+    void PrintArmSequence(const char *filename, const og::PathGeometric &path, int skip=1);
+    void CheckArmSequence();
+    void PrintArmSolution(const char *filename, const og::PathGeometric &path, int skip=1);
 
   protected:
-    double SizeX = 6, SizeY = 5, SizeZ = 5;
-    int selector;
+    double SizeZ = 5;
+    std::vector<TLink> Arm;  // Manipulator
+    TVector ArmBase;  // The base position of Manipulator
+    double total_len;
     int num = 5;
-    std::vector<TVector> Obstacles;
-    double ObstacleRadius = 0.5;
 
-    double xStart,yStart,zStart;
-    double xGoal,yGoal,zGoal;
+    int selector;
+    std::vector<TVector> Obstacles;
+
+    double* xMin;
+    double* xMax;
+    double* yMin;
+    double* yMax;
+    double* zMin;
+    double* zMax;
+
+    /// Number of obstacles in space.
+    int numObstacles;
+
+    /// Start position in space
+    double xStart;
+    double yStart;
+    double zStart;
+
+    /// Goal position in space
+    double xGoal;
+    double yGoal;
+    double zGoal;
 
     /// Boundaries of the space
     double xLeft;
@@ -106,37 +130,4 @@ class Planning{
     double zTop;
     double zBottom;
 };
-
-class MPlanning:
-  public Planning{
-    public:
-      MPlanning(std::string fileName);
-      void planWithSimpleSetup();
-      /* Compute the forward kinematics of a manipulator ``linkes''
-      whose joint angles are specified by ``angles'',
-      and the base position is ``base''.
-      The result is stored into ``result'' that contains
-      the base position and every position of the end-points.
-      i.e. result.size()==linkes.size()+1 */
-      void ForwardKinematics(const std::vector<TLink> &linkes, const std::vector<double> &angles, const TVector &base, std::vector<TVector> &result);
-
-      /* Save a sequence of the arm on ``path'' into file that is gnuplot-compatible.
-      The path should be a sequence of joint-angles.
-      The parameter ``skip'' is an interval to sample from ``path'' (1 for every sample). */
-      void PrintArmSequence(const char *filename, const og::PathGeometric &path, int skip=1);
-      void CheckArmSequence();
-      /* Print the planning result into a file.
-      The resulting file is a gnuplot script that plots the path,
-      the sequence of the arm on the path, and the obstacles.
-      Sequence of the arm on ``path'': stored into "res/frame_all.dat",
-      obstacles: stored into the resulting script.
-      Usage:  gnuplot -persistent filename */
-      void PrintArmSolution(const char *filename, const og::PathGeometric &path, int skip=1);
-
-    private:
-      std::vector<TLink> Arm;  // Manipulator
-      TVector ArmBase;  // The base position of Manipulator
-      double total_len;
-  };
-
 #endif

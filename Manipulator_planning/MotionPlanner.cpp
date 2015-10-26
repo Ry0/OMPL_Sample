@@ -6,17 +6,27 @@
 using namespace std;
 
 // コンストラクタ
-Planning::Planning(std::string fileName):
-  xLeft(0),
-  xRight(6),
-  yTop(5),
-  yBottom(0),
-  zTop(5),
-  zBottom(0)
+Planning::Planning(std::string fileName)
 {
-  // CreateMap();
+  initFromFile(fileName);
+  SetArm();
   // PlannerSelector();
 }
+
+
+
+void Planning::SetArm(){
+  // ArmBase: マニピュレータのベース位置．以下のように設定する：
+  ArmBase = V3(0.0,0.0,0.0);
+
+  // Arm: マニピュレータオブジェクト．実質，ローカルフレームで定義された関節の方向ベクトルと，エンドポイント（端点）のベクトルから構成される構造体のベクトルである．以下のように，多リンク系を作る：
+  total_len = 0.99 * (SizeZ - ArmBase(2));
+  Arm.push_back(TLink(V3(0,0,1), V3(0,0,0.0)));
+  Arm.push_back(TLink(V3(0,1,0), V3(0,0,total_len/(double)3)));
+  Arm.push_back(TLink(V3(0,1,0), V3(0,0,total_len/(double)3)));
+  Arm.push_back(TLink(V3(0,1,0), V3(0,0,total_len/(double)3)));
+}
+
 
 
 void Planning::PlannerSelector()
@@ -53,6 +63,70 @@ void Planning::PlannerSelector()
     }
   }
 }
+
+
+
+void Planning::initFromFile(std::string fileName)
+{
+  std::ifstream input(fileName.c_str());
+
+  input >> xLeft >> xRight >> yBottom >> yTop >> zBottom >> zTop >> numObstacles;
+
+  xMin = new double[numObstacles];
+  xMax = new double[numObstacles];
+  yMin = new double[numObstacles];
+  yMax = new double[numObstacles];
+  zMin = new double[numObstacles];
+  zMax = new double[numObstacles];
+
+  for (int i = 0; i < numObstacles; ++i){
+    input >> xMin[i] >> xMax[i] >> yMin[i] >> yMax[i] >> zMin[i] >> zMax[i];
+  }
+
+  input >> xStart >> yStart >> zStart >> xGoal >> yGoal >> zGoal;
+
+  input.close();
+
+  printf("\nフィールドの定義域は: x[%5.2lf, %5.2lf] y[%5.2lf, %5.2lf] z[%5.2lf, %5.2lf]\n", xLeft, xRight, yBottom, yTop, zBottom, zTop);
+
+  cout << "障害物リスト" << endl;
+  for (int i = 0; i < numObstacles; ++i){
+    printf("             障害物%d: x[%5.2lf, %5.2lf] y[%5.2lf, %5.2lf] z[%5.2lf, %5.2lf]\n", i+1, xMin[i], xMax[i], yMin[i], yMax[i], zMin[i], zMax[i]);
+  }
+
+  printf("\nスタートとゴール    : Start[%5.2lf, %5.2lf, %5.2lf]\n", xStart, yStart, zStart);
+  printf("                        End[%5.2lf, %5.2lf, %5.2lf]\n\n", xGoal, yGoal, zGoal);
+}
+
+
+
+void Planning::CreateCube(std::ostream &cube)
+{
+  RANGE obstacle;
+
+  for(int ob = 0; ob < numObstacles; ++ob){
+    obstacle.xrange[0] = xMin[ob]; obstacle.yrange[0] = yMin[ob]; obstacle.zrange[0] = zMin[ob];
+    obstacle.xrange[1] = xMax[ob]; obstacle.yrange[1] = yMax[ob]; obstacle.zrange[1] = zMax[ob];
+    for (int i = 0; i < 2; ++i){
+      cube << obstacle.xrange[0] << "\t" << obstacle.yrange[0] << "\t" << obstacle.zrange[i] << std::endl;
+      cube << obstacle.xrange[1] << "\t" << obstacle.yrange[0] << "\t" << obstacle.zrange[i] << std::endl;
+      cube << obstacle.xrange[1] << "\t" << obstacle.yrange[1] << "\t" << obstacle.zrange[i] << std::endl;
+      cube << obstacle.xrange[0] << "\t" << obstacle.yrange[1] << "\t" << obstacle.zrange[i] << std::endl;
+      cube << obstacle.xrange[0] << "\t" << obstacle.yrange[0] << "\t" << obstacle.zrange[i] << std::endl;
+      cube << "\n\n";
+    }
+
+    for (int i = 0; i < 2; ++i){
+      for (int j = 0; j < 2; ++j){
+        for (int k = 0; k < 2; ++k){
+          cube << obstacle.xrange[i] << "\t" << obstacle.yrange[j] << "\t" << obstacle.zrange[k] << std::endl;
+        }
+        cube << "\n\n";
+      }
+    }
+  }
+}
+
 
 
 // (xTest, yTest)が障害物の中にあるかどうかの判定
@@ -206,21 +280,62 @@ bool Planning::link(const double* xMin, const double* xMax,
 }
 
 
+
 bool Planning::isStateValid(const ob::State *state)
 {
-  const ob::SE3StateSpace::StateType *state_3d= state->as<ob::SE3StateSpace::StateType>();
-  const double &x(state_3d->getX()), &y(state_3d->getY()), &z(state_3d->getZ());
-  double length;
+  // const ob::RealVectorStateSpace::StateType *state_vec= state->as<ob::RealVectorStateSpace::StateType>();
+  // std::vector<double> angles;
+  // std::vector<TVector> result;
 
-  for (int i = 0; i < num; ++i){
-    length = pow(x-Obstacles[i](0),2)+pow(y-Obstacles[i](1),2)+pow(z-Obstacles[i](2),2);
-    if (sqrt(length) < RobotRadius+ObstacleRadius){
-      return false;
-    }
-  }
+  // for (int i = 0; i < num; ++i){
+  //   angles.push_back(state_vec->values[i]);
+  // }
 
+  // ForwardKinematics(Arm, angles, ArmBase, result);
+  // for(size_t i = 0; i < result.size(); ++i){
+  //   cout << result[i] << endl;
+  // }
+  // cout << endl << endl;
+
+  // for (size_t i = 0; i < result.size()-1; ++i){
+  //   if(link(xMin, xMax, yMin, yMax, zMin, zMax, numObstacles,
+  //           result[i](0), result[i](1), result[i](2),
+  //           result[i+1](0), result[i+1](1), result[i+1](2))==false){
+  //     cout << "衝突してます" << endl;
+  //     return false;
+  //   }
+  // }
   return true;
 }
+
+
+
+/* Compute the forward kinematics of a manipulator ``linkes''
+whose joint angles are specified by ``angles'',
+and the base position is ``base''.
+The result is stored into ``result'' that contains
+the base position and every position of the end-points.
+
+i.e. result.size()==linkes.size()+1 */
+void Planning::ForwardKinematics(const std::vector<TLink> &linkes,
+                                  const std::vector<double> &angles, const TVector &base,
+                                  std::vector<TVector> &result)
+{
+  assert(linkes.size() == angles.size());
+  assert(base.size() == 3);
+  result.resize(linkes.size() + 1);
+  TMatrix R(3, 3), Rtmp(3, 3);
+  R(0, 0) = R(1, 1) = R(2, 2) = 1.0;
+  R(0, 1) = R(0, 2) = R(1, 0) = R(1, 2) = R(2, 0) = R(2, 1) = 0.0;
+  result[0] = base;
+  for (size_t i(1); i < result.size(); ++i) {
+    result[i].resize(3);
+    Rtmp = prod(R, RfromAxisAngle(linkes[i - 1].Axis, angles[i - 1]));
+    R = Rtmp;
+    result[i] = prod(R, linkes[i - 1].End) + result[i - 1];
+  }
+}
+
 
 
 // Print a vertex to file
@@ -242,18 +357,12 @@ void Planning::printEdge(std::ostream &os, const ob::StateSpacePtr &space, const
 void Planning::planWithSimpleSetup()
 {
   // Construct the state space where we are planning
-  ob::StateSpacePtr space(new ob::RealVectorStateSpace());
+  ob::StateSpacePtr space(new ob::RealVectorStateSpace(4));
 
   int count = 0;
 
-  ob::RealVectorBounds bounds(6);
-  // bounds.setLow(0, xLeft);
-  // bounds.setHigh(0, xRight);
-  // bounds.setLow(1, yBottom);
-  // bounds.setHigh(1, yTop);
-  // bounds.setLow(2, zBottom);
-  // bounds.setHigh(2, zTop);
-  for (int i = 0; i < 6; ++i){
+  ob::RealVectorBounds bounds(4);
+  for (int i = 0; i < 4; ++i){
     bounds.setLow(i, 0);
     bounds.setHigh(i, M_PI);
   }
@@ -267,13 +376,20 @@ void Planning::planWithSimpleSetup()
 
   // Setup Start and Goal
   ob::ScopedState<ob::RealVectorStateSpace> start(space);
-  // start->setXYZ(xStart,yStart,zStart);
+  start->as<ob::RealVectorStateSpace::StateType>()->values[0] = 0;
+  start->as<ob::RealVectorStateSpace::StateType>()->values[1] = M_PI/10;
+  start->as<ob::RealVectorStateSpace::StateType>()->values[2] = M_PI/2;
+  start->as<ob::RealVectorStateSpace::StateType>()->values[3] = -M_PI/2;
   // start->rotation().setIdentity();
   start.random();
   cout << "start: ";
   start.print(cout);
 
   ob::ScopedState<ob::RealVectorStateSpace> goal(space);
+  goal->as<ob::RealVectorStateSpace::StateType>()->values[0] = M_PI/2;
+  goal->as<ob::RealVectorStateSpace::StateType>()->values[1] = 0;
+  goal->as<ob::RealVectorStateSpace::StateType>()->values[2] = 0;
+  goal->as<ob::RealVectorStateSpace::StateType>()->values[3] = 0;
   // goal->setXYZ(xGoal,yGoal,zGoal);
   // goal->rotation().setIdentity();
   goal.random();
@@ -333,8 +449,7 @@ void Planning::planWithSimpleSetup()
       // Print the solution path to a file
       std::ofstream ofs("../plot/path.dat");
       ss.getSolutionPath().printAsMatrix(ofs);
-      PrintBoxSequence("../plot/UAV.dat", ss.getSolutionPath());
-      PrintSolution("../plot/UAV.plt", ss.getSolutionPath());
+      OpenGnuplot("../plot/frame_all.dat", ss.getSolutionPath());
 
       // Get the planner data to visualize the vertices and the edges
       ob::PlannerData pdat(ss.getSpaceInformation());
@@ -374,112 +489,24 @@ void Planning::planWithSimpleSetup()
 }
 
 
-/* Print every center shperes into a file "res/map.dat". */
-void Planning::PrintMap()
-{
-  using namespace std;
-  ofstream ofs("../plot/map.dat");
-  for (vector<TVector>::const_iterator itr(Obstacles.begin()), last(Obstacles.end()); itr != last;
-       ++itr)
-    ofs << (*itr) << endl;
-}
-
-
-/* Save a sequence of box on ``path'' into file that is gnuplot-compatible.
-    The path should be a sequence of SE(3) state. The box size is ``(sizex,sizey,sizez)''.
-    The parameter ``skip'' is an interval to sample from ``path'' (1 for every sample). */
-void Planning::PrintBoxSequence(const char *filename, const og::PathGeometric &path, int skip)
-{
-  using namespace std;
-  using namespace boost::numeric::ublas;
-  ofstream ofs(filename);
-  for (size_t i(0); i < path.getStateCount(); i += skip) {
-    const ob::SE3StateSpace::StateType *s = path.getState(i)->as<ob::SE3StateSpace::StateType>();
-    TVector pos(3), d(3);
-    TMatrix R = QtoR(s->rotation());
-    pos(0) = s->getX();
-    pos(1) = s->getY();
-    pos(2) = s->getZ();
-    ofs << pos + prod(R, V3(RobotX, RobotY, RobotZ)) << endl;
-    ofs << pos + prod(R, V3(RobotX, -RobotY, RobotZ)) << endl;
-    ofs << pos + prod(R, V3(-RobotX, -RobotY, RobotZ)) << endl;
-    ofs << pos + prod(R, V3(-RobotX, RobotY, RobotZ)) << endl;
-    ofs << pos + prod(R, V3(RobotX, RobotY, RobotZ)) << endl;
-    ofs << pos + prod(R, V3(RobotX, RobotY, -RobotZ)) << endl;
-    ofs << pos + prod(R, V3(RobotX, -RobotY, -RobotZ)) << endl;
-    ofs << pos + prod(R, V3(RobotX, -RobotY, RobotZ)) << endl;
-    ofs << pos + prod(R, V3(RobotX, -RobotY, -RobotZ)) << endl;
-    ofs << pos + prod(R, V3(-RobotX, -RobotY, -RobotZ)) << endl;
-    ofs << pos + prod(R, V3(-RobotX, -RobotY, RobotZ)) << endl;
-    ofs << pos + prod(R, V3(-RobotX, -RobotY, -RobotZ)) << endl;
-    ofs << pos + prod(R, V3(-RobotX, RobotY, -RobotZ)) << endl;
-    ofs << pos + prod(R, V3(-RobotX, RobotY, RobotZ)) << endl;
-    ofs << pos + prod(R, V3(-RobotX, RobotY, -RobotZ)) << endl;
-    ofs << pos + prod(R, V3(RobotX, RobotY, -RobotZ)) << endl;
-    ofs << pos + prod(R, V3(RobotX, RobotY, RobotZ)) << endl;
-    ofs << endl
-        << endl;
-  }
-}
-
-
-/* Print the planning result into a file.
-    The resulting file is a gnuplot script that plots the path,
-    the sequence of box on the path, and the obstacles.
-    ``path'': stored into "res/path.dat",
-    sequence of box on ``path'': stored into "res/frame_all.dat",
-    obstacles: stored into the resulting script.
-    Usage:  gnuplot -persistent filename */
-void Planning::PrintSolution(const char *filename, const og::PathGeometric &path, int skip)
-{
-  using namespace std;
-  ofstream ofs(filename);
-  {
-    ofstream ofs("../plot/path.dat");
-    path.printAsMatrix(ofs);
-  }
-  PrintBoxSequence("../plot/frame_all.dat", path, skip);
-  ofs << "\
-          #set terminal png size 800, 640 transparent                     \n\
-          #set terminal svg size 1200 780 fname 'Trebuchet MS' fsize 24   \n\
-          set xlabel 'x'         \n\
-          set ylabel 'y'         \n\
-          set zlabel 'z'         \n\
-          set hidden3d           \n\
-          set ticslevel 0        \n\
-          set size 0.7,1         \n\
-          set parametric         \n\
-          set urange [0:6.28]    \n\
-          set vrange [0:6.28]    \n\
-          set isosample 8,8      \n\
-          set samples 10         \n\
-          r= "
-      << ObstacleRadius << endl;
-  ofs << "splot \\" << endl;
-  for (vector<TVector>::const_iterator itr(Obstacles.begin()), last(Obstacles.end()); itr != last;
-       ++itr) {
-    const double &ox((*itr)(0)), &oy((*itr)(1)), &oz((*itr)(2));
-    ofs << "  "
-        << "r*cos(u)*cos(v)+" << ox << ",r*sin(u)*cos(v)+" << oy << ",r*sin(v)+" << oz
-        << " w l lt 1 lw 0.2 t '',"
-        << "\\" << endl;
-  }
-  ofs << "'frame_all.dat' w l lt 3, \\" << endl;
-  ofs << "'path.dat' w l lt 4" << endl;
-}
 
 
 // 参考：http://www-sens.sys.es.osaka-u.ac.jp/wakate/tutorial/group3/gnuplot/
-int Planning::OpenGnuplot()
+int Planning::OpenGnuplot(const char *filename, const og::PathGeometric &path, int skip)
 {
   // output_plt("../plot/plot.plt");
+  PrintArmSequence(filename, path, skip);
 
   FILE *fp = popen("cd ../plot && gnuplot -persist", "w");
   if (fp == NULL) {
     return -1;
   }
+  ofstream ofs("../plot/test.dat");
   fputs("set mouse\n", fp);
-  fputs("load \"ARM.plt\"\n", fp);
+  CreateCube(ofs);
+  // fputs("splot \"test.dat\" using 1:2:3 with lines,\n", fp);
+  fputs("splot \"frame_all.dat\" w lp lt 3 pt 6 lw 1.5\n", fp);
+  // fputs("load \"ARM.plt\"\n", fp);
 
   fflush(fp);
   cin.get();
@@ -487,49 +514,11 @@ int Planning::OpenGnuplot()
   return 0;
 }
 
-MPlanning::MPlanning(std::string fileName) : Planning(fileName)
-{
-  // ArmBase: マニピュレータのベース位置．以下のように設定する：
-  ArmBase= V3(0.0,0.0,0.0);
-
-  // Arm: マニピュレータオブジェクト．実質，ローカルフレームで定義された関節の方向ベクトルと，エンドポイント（端点）のベクトルから構成される構造体のベクトルである．以下のように，多リンク系を作る：
-  total_len = 0.99 * (SizeZ-ArmBase(2));
-  Arm.push_back(TLink(V3(0,0,1), V3(0,0,0.0)));
-  Arm.push_back(TLink(V3(0,1,0), V3(0,0,total_len/(double)3)));
-  Arm.push_back(TLink(V3(0,1,0), V3(0,0,total_len/(double)3)));
-  Arm.push_back(TLink(V3(0,1,0), V3(0,0,total_len/(double)3)));
-}
-
-/* Compute the forward kinematics of a manipulator ``linkes''
-whose joint angles are specified by ``angles'',
-and the base position is ``base''.
-The result is stored into ``result'' that contains
-the base position and every position of the end-points.
-
-i.e. result.size()==linkes.size()+1 */
-void MPlanning::ForwardKinematics(const std::vector<TLink> &linkes,
-                                  const std::vector<double> &angles, const TVector &base,
-                                  std::vector<TVector> &result)
-{
-  assert(linkes.size() == angles.size());
-  assert(base.size() == 3);
-  result.resize(linkes.size() + 1);
-  TMatrix R(3, 3), Rtmp(3, 3);
-  R(0, 0) = R(1, 1) = R(2, 2) = 1.0;
-  R(0, 1) = R(0, 2) = R(1, 0) = R(1, 2) = R(2, 0) = R(2, 1) = 0.0;
-  result[0] = base;
-  for (size_t i(1); i < result.size(); ++i) {
-    result[i].resize(3);
-    Rtmp = prod(R, RfromAxisAngle(linkes[i - 1].Axis, angles[i - 1]));
-    R = Rtmp;
-    result[i] = prod(R, linkes[i - 1].End) + result[i - 1];
-  }
-}
 
 /* Save a sequence of the arm on ``path'' into file that is gnuplot-compatible.
    The path should be a sequence of joint-angles.
    The parameter ``skip'' is an interval to sample from ``path'' (1 for every sample). */
-void MPlanning::PrintArmSequence(const char *filename, const og::PathGeometric &path, int skip)
+void Planning::PrintArmSequence(const char *filename, const og::PathGeometric &path, int skip)
 {
   using namespace boost::numeric::ublas;
   ofstream ofs(filename);
@@ -545,7 +534,8 @@ void MPlanning::PrintArmSequence(const char *filename, const og::PathGeometric &
   }
 }
 
-void MPlanning::CheckArmSequence()
+
+void Planning::CheckArmSequence()
 {
   using namespace boost::numeric::ublas;
   std::vector<double> angles(Arm.size());
@@ -565,165 +555,32 @@ void MPlanning::CheckArmSequence()
    Sequence of the arm on ``path'': stored into "res/frame_all.dat",
    obstacles: stored into the resulting script.
    Usage:  gnuplot -persistent filename */
-void MPlanning::PrintArmSolution(const char *filename, const og::PathGeometric &path, int skip)
+void Planning::PrintArmSolution(const char *filename, const og::PathGeometric &path, int skip)
 {
-  ofstream ofs(filename);
-  PrintArmSequence("../plot/frame_all.dat", path, skip);
-  ofs << "\
-  #set terminal png size 800, 640 transparent                     \n\
-  #set terminal svg size 1200 780 fname 'Trebuchet MS' fsize 24   \n\
-  set xlabel 'x'         \n\
-  set ylabel 'y'         \n\
-  set zlabel 'z'         \n\
-  set hidden3d           \n\
-  set ticslevel 0        \n\
-  set size 0.7,1         \n\
-  set parametric         \n\
-  set urange [0:6.28]    \n\
-  set vrange [0:6.28]    \n\
-  set isosample 8,8      \n\
-  set samples 10         \n\
-  r= " << ObstacleRadius << endl;
-  ofs << "splot \\" << endl;
-  for (vector<TVector>::const_iterator itr(Obstacles.begin()), last(Obstacles.end()); itr != last; ++itr) {
-    const double &ox((*itr)(0)), &oy((*itr)(1)), &oz((*itr)(2));
-    ofs << "  "
-        << "r*cos(u)*cos(v)+" << ox << ",r*sin(u)*cos(v)+" << oy << ",r*sin(v)+" << oz
-        << " w l lt 1 lw 0.2 t '',"
-        << "\\" << endl;
-  }
-  ofs<<"'frame_all.dat' w lp lt 3 pt 6 lw 1.5"<<endl;
-}
-
-
-void MPlanning::planWithSimpleSetup()
-{
-  // Construct the state space where we are planning
-  ob::StateSpacePtr space(new ob::SE3StateSpace());
-
-  int count = 0;
-
-  ob::RealVectorBounds bounds(3);
-  bounds.setLow(0, xLeft);
-  bounds.setHigh(0, xRight);
-  bounds.setLow(1, yBottom);
-  bounds.setHigh(1, yTop);
-  bounds.setLow(2, zBottom);
-  bounds.setHigh(2, zTop);
-  space->as<ob::SE3StateSpace>()->setBounds(bounds);
-
-  // Instantiate SimpleSetup
-  og::SimpleSetup ss(space);
-
-  // Setup the StateValidityChecker
-  ss.setStateValidityChecker(boost::bind(&Planning::isStateValid, this, _1));
-
-  // Setup Start and Goal
-  ob::ScopedState<ob::SE3StateSpace> start(space);
-  // start->setXYZ(xStart,yStart,zStart);
-  // start->rotation().setIdentity();
-  start.random();
-  cout << "start: ";
-  start.print(cout);
-
-  ob::ScopedState<ob::SE3StateSpace> goal(space);
-  // goal->setXYZ(xGoal,yGoal,zGoal);
-  // goal->rotation().setIdentity();
-  goal.random();
-  cout << "goal: ";
-  goal.print(cout);
-
-  ss.setStartAndGoalStates(start, goal);
-
-  if (selector == 1) {
-    ob::PlannerPtr planner(new og::PRM(ss.getSpaceInformation()));
-    ss.setPlanner(planner);
-  } else if (selector == 2) {
-    ob::PlannerPtr planner(new og::RRT(ss.getSpaceInformation()));
-    ss.setPlanner(planner);
-  } else if (selector == 3) {
-    ob::PlannerPtr planner(new og::RRTConnect(ss.getSpaceInformation()));
-    ss.setPlanner(planner);
-  } else if (selector == 4) {
-    ob::PlannerPtr planner(new og::RRTstar(ss.getSpaceInformation()));
-    ss.setPlanner(planner);
-  } else if (selector == 5) {
-    ob::PlannerPtr planner(new og::LBTRRT(ss.getSpaceInformation()));
-    ss.setPlanner(planner);
-  } else if (selector == 6) {
-    ob::PlannerPtr planner(new og::LazyRRT(ss.getSpaceInformation()));
-    ss.setPlanner(planner);
-  } else if (selector == 7) {
-    ob::PlannerPtr planner(new og::TRRT(ss.getSpaceInformation()));
-    ss.setPlanner(planner);
-  } else if (selector == 8) {
-    ob::PlannerPtr planner(new og::pRRT(ss.getSpaceInformation()));
-    ss.setPlanner(planner);
-  } else if (selector == 9) {
-    ob::PlannerPtr planner(new og::EST(ss.getSpaceInformation()));
-    ss.setPlanner(planner);
-  }
-
-  cout << "----------------" << endl;
-
-  // Execute the planning algorithm
-  ob::PlannerStatus solved = ss.solve(20);
-
-  while (1) {
-    // If we have a solution,
-    if (solved) {
-      // Print the solution path (that is not simplified yet) to a file
-      std::ofstream ofs0("../plot/path0.dat");
-      ss.getSolutionPath().printAsMatrix(ofs0);
-
-      // Simplify the solution
-      ss.simplifySolution();
-      cout << "----------------" << endl;
-      cout << "Found solution:" << endl;
-      // Print the solution path to screen
-      ss.getSolutionPath().print(cout);
-
-      // Print the solution path to a file
-      std::ofstream ofs("../plot/path.dat");
-      ss.getSolutionPath().printAsMatrix(ofs);
-      // PrintBoxSequence("../plot/UAV.dat", ss.getSolutionPath());
-      // PrintSolution("../plot/UAV.plt", ss.getSolutionPath());
-      PrintArmSolution("../plot/ARM.plt", ss.getSolutionPath());
-
-      // Get the planner data to visualize the vertices and the edges
-      ob::PlannerData pdat(ss.getSpaceInformation());
-      ss.getPlannerData(pdat);
-
-      // Print the vertices to file
-      std::ofstream ofs_v("../plot/vertices.dat");
-      for (unsigned int i(0); i < pdat.numVertices(); ++i) {
-        printEdge(ofs_v, ss.getStateSpace(), pdat.getVertex(i));
-        ofs_v << endl;
-      }
-
-      // Print the edges to file
-      std::ofstream ofs_e("../plot/edges.dat");
-      std::vector<unsigned int> edge_list;
-      for (unsigned int i(0); i < pdat.numVertices(); ++i) {
-        unsigned int n_edge = pdat.getEdges(i, edge_list);
-        for (unsigned int i2(0); i2 < n_edge; ++i2) {
-          printEdge(ofs_e, ss.getStateSpace(), pdat.getVertex(i));
-          ofs_e << endl;
-          printEdge(ofs_e, ss.getStateSpace(), pdat.getVertex(edge_list[i2]));
-          ofs_e<<endl;
-          ofs_e<<endl<<endl;
-        }
-      }
-      OpenGnuplot();
-      break;
-    } else {
-      cout << "No solution found" << endl;
-      count++;
-      if(count > 3){
-        cout << "全然経路見つからんし！" << endl;
-        break;
-      }
-    }
-
-  }
+  // ofstream ofs(filename);
+  // PrintArmSequence("../plot/frame_all.dat", path, skip);
+  // ofs << "\
+  // #set terminal png size 800, 640 transparent                     \n\
+  // #set terminal svg size 1200 780 fname 'Trebuchet MS' fsize 24   \n\
+  // set xlabel 'x'         \n\
+  // set ylabel 'y'         \n\
+  // set zlabel 'z'         \n\
+  // set hidden3d           \n\
+  // set ticslevel 0        \n\
+  // set size 0.7,1         \n\
+  // set parametric         \n\
+  // set urange [0:6.28]    \n\
+  // set vrange [0:6.28]    \n\
+  // set isosample 8,8      \n\
+  // set samples 10         \n\
+  // r= " << ObstacleRadius << endl;
+  // ofs << "splot \\" << endl;
+  // for (vector<TVector>::const_iterator itr(Obstacles.begin()), last(Obstacles.end()); itr != last; ++itr) {
+  //   const double &ox((*itr)(0)), &oy((*itr)(1)), &oz((*itr)(2));
+  //   ofs << "  "
+  //       << "r*cos(u)*cos(v)+" << ox << ",r*sin(u)*cos(v)+" << oy << ",r*sin(v)+" << oz
+  //       << " w l lt 1 lw 0.2 t '',"
+  //       << "\\" << endl;
+  // }
+  // ofs<<"'frame_all.dat' w lp lt 3 pt 6 lw 1.5"<<endl;
 }
