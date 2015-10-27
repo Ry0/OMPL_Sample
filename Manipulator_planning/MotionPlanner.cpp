@@ -10,7 +10,8 @@ Planning::Planning(std::string fileName)
 {
   initFromFile(fileName);
   SetArm();
-  // PlannerSelector();
+  PlannerSelector();
+  srand((unsigned int)time(NULL));
 }
 
 
@@ -305,7 +306,15 @@ bool Planning::isStateValid(const ob::State *state)
   //     return false;
   //   }
   // }
-  return true;
+  double roulette;
+  roulette = (((double)rand())/RAND_MAX)*100;
+  if(roulette>80){
+    return true;
+  }else{
+    return false;
+  }
+
+
 }
 
 
@@ -363,7 +372,7 @@ void Planning::planWithSimpleSetup()
 
   ob::RealVectorBounds bounds(4);
   for (int i = 0; i < 4; ++i){
-    bounds.setLow(i, 0);
+    bounds.setLow(i, -M_PI);
     bounds.setHigh(i, M_PI);
   }
   space->as<ob::RealVectorStateSpace>()->setBounds(bounds);
@@ -381,18 +390,18 @@ void Planning::planWithSimpleSetup()
   start->as<ob::RealVectorStateSpace::StateType>()->values[2] = M_PI/2;
   start->as<ob::RealVectorStateSpace::StateType>()->values[3] = -M_PI/2;
   // start->rotation().setIdentity();
-  start.random();
+  // start.random();
   cout << "start: ";
   start.print(cout);
 
   ob::ScopedState<ob::RealVectorStateSpace> goal(space);
   goal->as<ob::RealVectorStateSpace::StateType>()->values[0] = M_PI/2;
   goal->as<ob::RealVectorStateSpace::StateType>()->values[1] = 0;
-  goal->as<ob::RealVectorStateSpace::StateType>()->values[2] = 0;
-  goal->as<ob::RealVectorStateSpace::StateType>()->values[3] = 0;
+  goal->as<ob::RealVectorStateSpace::StateType>()->values[2] = M_PI/10;
+  goal->as<ob::RealVectorStateSpace::StateType>()->values[3] = M_PI/2;
   // goal->setXYZ(xGoal,yGoal,zGoal);
   // goal->rotation().setIdentity();
-  goal.random();
+  // goal.random();
   cout << "goal: ";
   goal.print(cout);
 
