@@ -10,7 +10,8 @@ Planning::Planning(std::string fileName)
 {
   initFromFile(fileName);
   SetArm();
-  PlannerSelector();
+  // PlannerSelector();
+  selector = 3;
   srand((unsigned int)time(NULL));
 }
 
@@ -284,37 +285,35 @@ bool Planning::link(const double* xMin, const double* xMax,
 
 bool Planning::isStateValid(const ob::State *state)
 {
-  // const ob::RealVectorStateSpace::StateType *state_vec= state->as<ob::RealVectorStateSpace::StateType>();
-  // std::vector<double> angles;
-  // std::vector<TVector> result;
+  const ob::RealVectorStateSpace::StateType *state_vec= state->as<ob::RealVectorStateSpace::StateType>();
+  std::vector<double> angles(Arm.size());
+  std::vector<TVector> result;
 
-  // for (int i = 0; i < num; ++i){
-  //   angles.push_back(state_vec->values[i]);
+  for (size_t  i = 0; i < Arm.size(); ++i){
+    cout << (*state_vec)[i] << endl;
+    angles[i] = (*state_vec)[i];
+    // cout << "angle = " << angles[i] << endl;
+  }
+
+  // for (size_t  i = 0; i < Arm.size(); ++i){
+  //   cout << "angle = " << angles[i] << endl;
   // }
 
-  // ForwardKinematics(Arm, angles, ArmBase, result);
+  ForwardKinematics(Arm, angles, ArmBase, result);
   // for(size_t i = 0; i < result.size(); ++i){
   //   cout << result[i] << endl;
   // }
   // cout << endl << endl;
 
-  // for (size_t i = 0; i < result.size()-1; ++i){
-  //   if(link(xMin, xMax, yMin, yMax, zMin, zMax, numObstacles,
-  //           result[i](0), result[i](1), result[i](2),
-  //           result[i+1](0), result[i+1](1), result[i+1](2))==false){
-  //     cout << "衝突してます" << endl;
-  //     return false;
-  //   }
-  // }
-  double roulette;
-  roulette = (((double)rand())/RAND_MAX)*100;
-  if(roulette>80){
-    return true;
-  }else{
-    return false;
+  for (size_t i = 0; i < result.size()-1; ++i){
+    if(link(xMin, xMax, yMin, yMax, zMin, zMax, numObstacles,
+            result[i](0), result[i](1), result[i](2),
+            result[i+1](0), result[i+1](1), result[i+1](2))==false){
+      cout << "衝突してます" << endl;
+      return false;
+    }
   }
-
-
+  return true;
 }
 
 
@@ -327,10 +326,10 @@ the base position and every position of the end-points.
 
 i.e. result.size()==linkes.size()+1 */
 void Planning::ForwardKinematics(const std::vector<TLink> &linkes,
-                                  const std::vector<double> &angles, const TVector &base,
-                                  std::vector<TVector> &result)
+                                 const std::vector<double> &angles, const TVector &base,
+                                 std::vector<TVector> &result)
 {
-  assert(linkes.size() == angles.size());
+  // assert(linkes.size() == angles.size());
   assert(base.size() == 3);
   result.resize(linkes.size() + 1);
   TMatrix R(3, 3), Rtmp(3, 3);
@@ -385,20 +384,20 @@ void Planning::planWithSimpleSetup()
 
   // Setup Start and Goal
   ob::ScopedState<ob::RealVectorStateSpace> start(space);
-  start->as<ob::RealVectorStateSpace::StateType>()->values[0] = 0;
-  start->as<ob::RealVectorStateSpace::StateType>()->values[1] = M_PI/10;
-  start->as<ob::RealVectorStateSpace::StateType>()->values[2] = M_PI/2;
-  start->as<ob::RealVectorStateSpace::StateType>()->values[3] = -M_PI/2;
+  start->as<ob::RealVectorStateSpace::StateType>()->values[0] = M_PI/2.0;
+  start->as<ob::RealVectorStateSpace::StateType>()->values[1] = M_PI/4.0;
+  start->as<ob::RealVectorStateSpace::StateType>()->values[2] = M_PI/5.0;
+  start->as<ob::RealVectorStateSpace::StateType>()->values[3] = M_PI/8.0;
   // start->rotation().setIdentity();
   // start.random();
   cout << "start: ";
   start.print(cout);
 
   ob::ScopedState<ob::RealVectorStateSpace> goal(space);
-  goal->as<ob::RealVectorStateSpace::StateType>()->values[0] = M_PI/2;
-  goal->as<ob::RealVectorStateSpace::StateType>()->values[1] = 0;
-  goal->as<ob::RealVectorStateSpace::StateType>()->values[2] = M_PI/10;
-  goal->as<ob::RealVectorStateSpace::StateType>()->values[3] = M_PI/2;
+  goal->as<ob::RealVectorStateSpace::StateType>()->values[0] = -M_PI/2.0;
+  goal->as<ob::RealVectorStateSpace::StateType>()->values[1] = M_PI/4.0;
+  goal->as<ob::RealVectorStateSpace::StateType>()->values[2] = M_PI/4.0;
+  goal->as<ob::RealVectorStateSpace::StateType>()->values[3] = M_PI/8.0;
   // goal->setXYZ(xGoal,yGoal,zGoal);
   // goal->rotation().setIdentity();
   // goal.random();
@@ -439,7 +438,7 @@ void Planning::planWithSimpleSetup()
   cout << "----------------" << endl;
 
   // Execute the planning algorithm
-  ob::PlannerStatus solved = ss.solve(20);
+  ob::PlannerStatus solved = ss.solve();
 
   while (1) {
     // If we have a solution,
@@ -504,22 +503,27 @@ void Planning::planWithSimpleSetup()
 int Planning::OpenGnuplot(const char *filename, const og::PathGeometric &path, int skip)
 {
   // output_plt("../plot/plot.plt");
-  PrintArmSequence(filename, path, skip);
+  PrintArmSequenceAnime(filename, path, skip);
 
-  FILE *fp = popen("cd ../plot && gnuplot -persist", "w");
-  if (fp == NULL) {
-    return -1;
-  }
-  ofstream ofs("../plot/test.dat");
-  fputs("set mouse\n", fp);
-  CreateCube(ofs);
-  // fputs("splot \"test.dat\" using 1:2:3 with lines,\n", fp);
-  fputs("splot \"frame_all.dat\" w lp lt 3 pt 6 lw 1.5\n", fp);
-  // fputs("load \"ARM.plt\"\n", fp);
+  // FILE *fp = popen("cd ../plot && gnuplot -persist", "w");
+  // if (fp == NULL) {
+  //   return -1;
+  // }
+  // ofstream ofs("../plot/test.dat");
+  // fputs("set mouse\n", fp);
+  // fputs("set view equal xyz\n", fp);
+  // fputs("set ticslevel 0\n", fp);
+  // fputs("set xrange[-5:5]\n", fp);
+  // fputs("set yrange[-5:5]\n", fp);
+  // fputs("set zrange[0:10]\n", fp);
+  // CreateCube(ofs);
+  // fputs("splot \"test.dat\" using 1:2:3 with lines,\\\n", fp);
+  // fputs("\"frame_all.dat\" w lp lt 3 pt 6 lw 1.5\n", fp);
 
-  fflush(fp);
-  cin.get();
-  pclose(fp);
+
+  // fflush(fp);
+  // // cin.get();
+  // pclose(fp);
   return 0;
 }
 
@@ -540,6 +544,22 @@ void Planning::PrintArmSequence(const char *filename, const og::PathGeometric &p
     for (size_t i(0); i < jpos.size(); ++i) ofs << jpos[i] << endl;
     ofs << endl
         << endl;
+  }
+}
+
+
+void Planning::PrintArmSequenceAnime(const char *filename, const og::PathGeometric &path, int skip)
+{
+  using namespace boost::numeric::ublas;
+  std::vector<double> angles(Arm.size());
+  std::vector<TVector> jpos;
+  for (size_t i(0); i < path.getStateCount(); i += skip) {
+    ofstream ofs(filename);
+    const ob::RealVectorStateSpace::StateType *s = path.getState(i)->as<ob::RealVectorStateSpace::StateType>();
+    for (size_t i(0); i < Arm.size(); ++i) angles[i] = (*s)[i];
+    ForwardKinematics(Arm, angles, ArmBase, jpos);
+    for (size_t i(0); i < jpos.size(); ++i) ofs << jpos[i] << endl;
+    for(int k=0; k<75; k++) usleep(10000);
   }
 }
 

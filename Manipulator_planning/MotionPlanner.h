@@ -91,6 +91,7 @@ class Planning{
     void PrintArmSequence(const char *filename, const og::PathGeometric &path, int skip=1);
     void CheckArmSequence();
     void PrintArmSolution(const char *filename, const og::PathGeometric &path, int skip=1);
+    void PrintArmSequenceAnime(const char *filename, const og::PathGeometric &path, int skip=1);
 
   protected:
     double SizeZ = 5;
