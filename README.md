@@ -1,5 +1,5 @@
 # OMPL Sample
-OMPLのサンプルを実行してみるだけのレポジトリ  
+OMPLのサンプルを実行してみるだけのレポジトリだな  
 ソースコードは以下のリンクを参考  
 [http://robotics.naist.jp/edu/text/?Robotics%2FOMPL#OMPLProgramming](http://robotics.naist.jp/edu/text/?Robotics%2FOMPL#OMPLProgramming)
 
