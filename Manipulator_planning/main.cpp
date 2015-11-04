@@ -1,5 +1,4 @@
 #include "MotionPlanner.h"
-// #include "p4-arm-helper.h"
 using namespace std;
 
 int main(){
@@ -7,4 +6,3 @@ int main(){
   planning.planWithSimpleSetup();
   return 0;
 }
-
