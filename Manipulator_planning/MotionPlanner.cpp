@@ -10,9 +10,7 @@ Planning::Planning(std::string fileName)
 {
   initFromFile(fileName);
   SetArm();
-  // PlannerSelector();
-  selector = 3;
-  srand((unsigned int)time(NULL));
+  PlannerSelector();
 }
 
 
@@ -33,9 +31,9 @@ void Planning::SetArm(){
 
 void Planning::PlannerSelector()
 {
-  std::string plan[9] = {"PRM",    "RRT",     "RRTConnect", "RRTstar",
-                         "LBTRRT", "LazyRRT", "TRRT",       "pRRT",
-                         "EST"};
+  // std::string plan[9] = {"PRM",    "RRT",     "RRTConnect", "RRTstar",
+  //                        "LBTRRT", "LazyRRT", "TRRT",       "pRRT",
+  //                        "EST"};
   std::string yn;
   while (1) {
     cout << "プランナーを選択してください" << endl;
@@ -58,15 +56,16 @@ void Planning::PlannerSelector()
       }
     }
 
-    cout << plan[selector - 1] << "プランナーを使います よろしいですか？(y/n)" << endl;
-    cin >> yn;
-    if(yn == "y"){
+    if(1 <= selector && selector <= 9){
       break;
     }
+    // cout << plan[selector - 1] << "プランナーを使います よろしいですか？(y/n)" << endl;
+    // cin >> yn;
+    // if(yn == "y"){
+    //   break;
+    // }
   }
 }
-
-
 
 void Planning::initFromFile(std::string fileName)
 {
@@ -85,7 +84,11 @@ void Planning::initFromFile(std::string fileName)
     input >> xMin[i] >> xMax[i] >> yMin[i] >> yMax[i] >> zMin[i] >> zMax[i];
   }
 
-  input >> xStart >> yStart >> zStart >> xGoal >> yGoal >> zGoal;
+  Start = new double[num-1];
+  Goal = new double[num-1];
+
+  input >> Start[0] >> Start[1] >> Start[2] >> Start[3]
+        >> Goal[0] >> Goal[1] >> Goal[2] >> Goal[3];
 
   input.close();
 
@@ -96,8 +99,8 @@ void Planning::initFromFile(std::string fileName)
     printf("             障害物%d: x[%5.2lf, %5.2lf] y[%5.2lf, %5.2lf] z[%5.2lf, %5.2lf]\n", i+1, xMin[i], xMax[i], yMin[i], yMax[i], zMin[i], zMax[i]);
   }
 
-  printf("\nスタートとゴール    : Start[%5.2lf, %5.2lf, %5.2lf]\n", xStart, yStart, zStart);
-  printf("                        End[%5.2lf, %5.2lf, %5.2lf]\n\n", xGoal, yGoal, zGoal);
+  printf("\nスタートとゴール    : Start[%5.2lf, %5.2lf, %5.2lf, %5.2lf]\n", Start[0], Start[1], Start[2], Start[3]);
+  printf("                        End[%5.2lf, %5.2lf, %5.2lf, %5.2lf]\n\n", Goal[0], Goal[1], Goal[2], Goal[3]);
 }
 
 
@@ -384,20 +387,20 @@ void Planning::planWithSimpleSetup()
 
   // Setup Start and Goal
   ob::ScopedState<ob::RealVectorStateSpace> start(space);
-  start->as<ob::RealVectorStateSpace::StateType>()->values[0] = M_PI/2.0;
-  start->as<ob::RealVectorStateSpace::StateType>()->values[1] = M_PI/4.0;
-  start->as<ob::RealVectorStateSpace::StateType>()->values[2] = M_PI/5.0;
-  start->as<ob::RealVectorStateSpace::StateType>()->values[3] = M_PI/8.0;
+  for (int i = 0; i < 4; ++i){
+    start->as<ob::RealVectorStateSpace::StateType>()->values[i] = Start[i];
+  }
+
   // start->rotation().setIdentity();
   // start.random();
+
   cout << "start: ";
   start.print(cout);
 
   ob::ScopedState<ob::RealVectorStateSpace> goal(space);
-  goal->as<ob::RealVectorStateSpace::StateType>()->values[0] = -M_PI/2.0;
-  goal->as<ob::RealVectorStateSpace::StateType>()->values[1] = M_PI/4.0;
-  goal->as<ob::RealVectorStateSpace::StateType>()->values[2] = M_PI/4.0;
-  goal->as<ob::RealVectorStateSpace::StateType>()->values[3] = M_PI/8.0;
+  for (int i = 0; i < 4; ++i){
+    goal->as<ob::RealVectorStateSpace::StateType>()->values[i] = Goal[i];
+  }
   // goal->setXYZ(xGoal,yGoal,zGoal);
   // goal->rotation().setIdentity();
   // goal.random();
@@ -503,22 +506,22 @@ void Planning::planWithSimpleSetup()
 int Planning::OpenGnuplot(const char *filename, const og::PathGeometric &path, int skip)
 {
   // output_plt("../plot/plot.plt");
-  PrintArmSequenceAnime(filename, path, skip);
+  PrintArmSequence(filename, path, skip);
 
-  // FILE *fp = popen("cd ../plot && gnuplot -persist", "w");
-  // if (fp == NULL) {
-  //   return -1;
-  // }
-  // ofstream ofs("../plot/test.dat");
-  // fputs("set mouse\n", fp);
-  // fputs("set view equal xyz\n", fp);
-  // fputs("set ticslevel 0\n", fp);
-  // fputs("set xrange[-5:5]\n", fp);
-  // fputs("set yrange[-5:5]\n", fp);
-  // fputs("set zrange[0:10]\n", fp);
-  // CreateCube(ofs);
-  // fputs("splot \"test.dat\" using 1:2:3 with lines,\\\n", fp);
-  // fputs("\"frame_all.dat\" w lp lt 3 pt 6 lw 1.5\n", fp);
+  FILE *fp = popen("cd ../plot && gnuplot -persist", "w");
+  if (fp == NULL) {
+    return -1;
+  }
+  ofstream ofs("../plot/Obstacle.dat");
+  CreateCube(ofs);
+  fputs("set mouse\n", fp);
+  fputs("set view equal xyz\n", fp);
+  fputs("set ticslevel 0\n", fp);
+  fputs("set xrange[-5:5]\n", fp);
+  fputs("set yrange[-5:5]\n", fp);
+  fputs("set zrange[0:10]\n", fp);
+  fputs("splot \"frame_all.dat\" w lp lt 3 pt 6 lw 1.5,\\\n", fp);
+  fputs("\"Obstacle.dat\" using 1:2:3 with lines lt rgb \"#FA5B08\" lw 2 \n", fp);
 
 
   // fflush(fp);
@@ -559,7 +562,7 @@ void Planning::PrintArmSequenceAnime(const char *filename, const og::PathGeometr
     for (size_t i(0); i < Arm.size(); ++i) angles[i] = (*s)[i];
     ForwardKinematics(Arm, angles, ArmBase, jpos);
     for (size_t i(0); i < jpos.size(); ++i) ofs << jpos[i] << endl;
-    for(int k=0; k<75; k++) usleep(10000);
+    // for(int k=0; k<75; k++) usleep(10000);
   }
 }
 

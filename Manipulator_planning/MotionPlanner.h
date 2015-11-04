@@ -114,14 +114,10 @@ class Planning{
     int numObstacles;
 
     /// Start position in space
-    double xStart;
-    double yStart;
-    double zStart;
+    double* Start;
 
     /// Goal position in space
-    double xGoal;
-    double yGoal;
-    double zGoal;
+    double* Goal;
 
     /// Boundaries of the space
     double xLeft;
