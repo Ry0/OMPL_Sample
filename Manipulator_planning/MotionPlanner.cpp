@@ -35,7 +35,7 @@ void Planning::PlannerSelector()
   //                        "LBTRRT", "LazyRRT", "TRRT",       "pRRT",
   //                        "EST"};
   std::string yn;
-  while (1) {
+  do {
     cout << "プランナーを選択してください" << endl;
 
     printf("PRM        → 1\n");
@@ -55,16 +55,12 @@ void Planning::PlannerSelector()
         break;
       }
     }
-
-    if(1 <= selector && selector <= 9){
-      break;
-    }
     // cout << plan[selector - 1] << "プランナーを使います よろしいですか？(y/n)" << endl;
     // cin >> yn;
     // if(yn == "y"){
     //   break;
     // }
-  }
+  }while (selector < 1 || 9 < selector);
 }
 
 void Planning::initFromFile(std::string fileName)
@@ -293,26 +289,18 @@ bool Planning::isStateValid(const ob::State *state)
   std::vector<TVector> result;
 
   for (size_t  i = 0; i < Arm.size(); ++i){
-    cout << (*state_vec)[i] << endl;
+    // cout << (*state_vec)[i] << endl;
     angles[i] = (*state_vec)[i];
-    // cout << "angle = " << angles[i] << endl;
   }
 
-  // for (size_t  i = 0; i < Arm.size(); ++i){
-  //   cout << "angle = " << angles[i] << endl;
-  // }
-
   ForwardKinematics(Arm, angles, ArmBase, result);
-  // for(size_t i = 0; i < result.size(); ++i){
-  //   cout << result[i] << endl;
-  // }
-  // cout << endl << endl;
+
 
   for (size_t i = 0; i < result.size()-1; ++i){
     if(link(xMin, xMax, yMin, yMax, zMin, zMax, numObstacles,
             result[i](0), result[i](1), result[i](2),
             result[i+1](0), result[i+1](1), result[i+1](2))==false){
-      cout << "衝突してます" << endl;
+      // cout << "衝突してます" << endl;
       return false;
     }
   }
@@ -589,30 +577,5 @@ void Planning::CheckArmSequence()
    Usage:  gnuplot -persistent filename */
 void Planning::PrintArmSolution(const char *filename, const og::PathGeometric &path, int skip)
 {
-  // ofstream ofs(filename);
-  // PrintArmSequence("../plot/frame_all.dat", path, skip);
-  // ofs << "\
-  // #set terminal png size 800, 640 transparent                     \n\
-  // #set terminal svg size 1200 780 fname 'Trebuchet MS' fsize 24   \n\
-  // set xlabel 'x'         \n\
-  // set ylabel 'y'         \n\
-  // set zlabel 'z'         \n\
-  // set hidden3d           \n\
-  // set ticslevel 0        \n\
-  // set size 0.7,1         \n\
-  // set parametric         \n\
-  // set urange [0:6.28]    \n\
-  // set vrange [0:6.28]    \n\
-  // set isosample 8,8      \n\
-  // set samples 10         \n\
-  // r= " << ObstacleRadius << endl;
-  // ofs << "splot \\" << endl;
-  // for (vector<TVector>::const_iterator itr(Obstacles.begin()), last(Obstacles.end()); itr != last; ++itr) {
-  //   const double &ox((*itr)(0)), &oy((*itr)(1)), &oz((*itr)(2));
-  //   ofs << "  "
-  //       << "r*cos(u)*cos(v)+" << ox << ",r*sin(u)*cos(v)+" << oy << ",r*sin(v)+" << oz
-  //       << " w l lt 1 lw 0.2 t '',"
-  //       << "\\" << endl;
-  // }
-  // ofs<<"'frame_all.dat' w lp lt 3 pt 6 lw 1.5"<<endl;
+
 }
