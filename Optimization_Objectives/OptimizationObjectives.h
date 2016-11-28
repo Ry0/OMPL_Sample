@@ -25,27 +25,27 @@ namespace og = ompl::geometric;
 
 namespace ompl
 {
-    namespace base
+  namespace base
+  {
+    class PathLengthOptimizationObjectiveMod : public ob::PathLengthOptimizationObjective
     {
-        class PathLengthOptimizationObjectiveMod : public ob::PathLengthOptimizationObjective
+      public:
+        PathLengthOptimizationObjectiveMod(const ob::SpaceInformationPtr& si) : ob::PathLengthOptimizationObjective(si){
+        }
+        ob::Cost stateCost(const ob::State* s) const{
+          ob::Cost tmp;
+          tmp = identityCost();
+          std::cout << "stateCost = " << tmp.value() << std::endl;
+          return identityCost();
+        }
+        ob::Cost motionCost(const State *s1, const State *s2) const
         {
-            public:
-                PathLengthOptimizationObjectiveMod(const ob::SpaceInformationPtr& si) : ob::PathLengthOptimizationObjective(si){
-                }
-                ob::Cost stateCost(const ob::State* s) const{
-                    ob::Cost tmp;
-                    tmp = identityCost();
-                    std::cout << "stateCost = " << tmp.value() << std::endl;
-                    return identityCost();
-                }
-                ob::Cost motionCost(const State *s1, const State *s2) const
-                {
-                    ob::Cost tmp;
-                    tmp = Cost(si_->distance(s1, s2));
-                    std::cout << "motionCost = " << tmp.value() << std::endl;
-                    return tmp;
-                }
-        };
-    }
+          ob::Cost tmp;
+          tmp = Cost(si_->distance(s1, s2));
+          std::cout << "motionCost = " << tmp.value() << std::endl;
+          return tmp;
+        }
+    };
+  }
 }
 #endif
