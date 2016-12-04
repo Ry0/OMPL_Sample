@@ -195,7 +195,7 @@ void Planning::planWithSimpleSetup()
   cout << "----------------" << endl;
 
   ompl::base::OptimizationObjectivePtr objective;
-  objective.reset(new ob::PathLengthOptimizationObjectiveMod(si));
+  objective.reset(new ob::MechanicalWorkOptimizationObjectiveMod(si, 0.1));
   // objective.reset(new ompl::base::PathLengthOptimizationObjective(si));
   ss.setOptimizationObjective(objective);
 

@@ -3,22 +3,10 @@
 #include <ompl/geometric/SimpleSetup.h>
 #include <ompl/base/objectives/StateCostIntegralObjective.h>
 #include <ompl/base/objectives/PathLengthOptimizationObjective.h>
-// #include <ompl/geometric/planners/prm/PRM.h>
-// #include <ompl/geometric/planners/rrt/RRTstar.h>
-// #include <ompl/geometric/planners/rrt/LBTRRT.h>
-// #include <ompl/geometric/planners/rrt/LazyRRT.h>
-// #include <ompl/geometric/planners/rrt/RRT.h>
-// #include <ompl/geometric/planners/rrt/RRTConnect.h>
-// #include <ompl/geometric/planners/rrt/TRRT.h>
-// #include <ompl/geometric/planners/rrt/pRRT.h>
-// #include <ompl/geometric/planners/est/EST.h>
-
-// #include <ompl/base/spaces/SE2StateSpace.h>
-// #include <ompl/base/PlannerData.h>
-// #include <cmath>
-// #include <iostream>
-// #include <fstream>
-// #include <ostream>
+#include <ompl/base/objectives/MechanicalWorkOptimizationObjective.h>
+#include <iostream>
+#include <stdio.h>
+#include <time.h>
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
@@ -42,6 +30,44 @@ namespace ompl
         {
           ob::Cost tmp;
           tmp = Cost(si_->distance(s1, s2));
+          std::cout << "motionCost = " << tmp.value() << std::endl;
+          return tmp;
+        }
+    };
+  }
+}
+
+namespace ompl
+{
+  namespace base
+  {
+    class MechanicalWorkOptimizationObjectiveMod : public ob::MechanicalWorkOptimizationObjective
+    {
+      public:
+        MechanicalWorkOptimizationObjectiveMod(const ob::SpaceInformationPtr& si, double pathLengthWeight) : ob::MechanicalWorkOptimizationObjective(si, pathLengthWeight){
+          srand((unsigned int)std::time(NULL));
+        }
+        double getPathLengthWeight() const
+        {
+          std::cout << "pathLengthWeight_ = " << pathLengthWeight_ << std::endl;
+          return pathLengthWeight_;
+        }
+
+        ob::Cost stateCost(const State *s) const
+        {
+          double rnd;
+          rnd = (rand()%1000+1)/1000.0;
+          ob::Cost tmp = Cost(rnd);
+          std::cout << "stateCost = " << tmp.value() << std::endl;
+          return Cost(1.0);
+        }
+
+        ob::Cost motionCost(const State *s1, const State *s2) const
+        {
+          // Only accrue positive changes in cost
+          double positiveCostAccrued = std::max(stateCost(s2).value() - stateCost(s1).value(), 0.0);
+          ob::Cost tmp;
+          tmp = Cost(positiveCostAccrued + pathLengthWeight_ * si_->distance(s1, s2));
           std::cout << "motionCost = " << tmp.value() << std::endl;
           return tmp;
         }
