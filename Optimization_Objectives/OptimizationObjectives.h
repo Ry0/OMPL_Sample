@@ -4,6 +4,7 @@
 #include <ompl/base/objectives/StateCostIntegralObjective.h>
 #include <ompl/base/objectives/PathLengthOptimizationObjective.h>
 #include <ompl/base/objectives/MechanicalWorkOptimizationObjective.h>
+#include <ompl/base/objectives/MaximizeMinClearanceObjective.h>
 #include <iostream>
 #include <stdio.h>
 #include <time.h>
@@ -74,4 +75,24 @@ namespace ompl
     };
   }
 }
+
+namespace ompl
+{
+  namespace base
+  {
+    class MaximizeMinClearanceObjectiveMod : public ob::MaximizeMinClearanceObjective
+    {
+      public:
+        MaximizeMinClearanceObjectiveMod(const ob::SpaceInformationPtr& si) : ob::MaximizeMinClearanceObjective(si){
+        }
+        ob::Cost stateCost(const State *s) const
+        {
+          ob::Cost tmp = Cost(si_->getStateValidityChecker()->clearance(s));
+          std::cout << "stateCost = " << tmp.value() << std::endl;
+          return tmp;
+        }
+    };
+  }
+}
+
 #endif
