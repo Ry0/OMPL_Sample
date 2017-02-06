@@ -298,7 +298,7 @@ void Planning::output_plt(std::string plt_output)
 // 参考：http://www-sens.sys.es.osaka-u.ac.jp/wakate/tutorial/group3/gnuplot/
 int Planning::OpenGnuplot()
 {
-
+  output_plt("../plot/plot.plt");
   FILE *fp = popen("cd ../plot && gnuplot -persist", "w");
   if (fp == NULL){
     return -1;
