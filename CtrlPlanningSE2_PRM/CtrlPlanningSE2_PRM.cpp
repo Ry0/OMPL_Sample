@@ -6,7 +6,7 @@ Visualize: plot "path.dat" (sequence of x,y,yaw)
 
 ///>>>CHANGE
 #include <ompl/control/SimpleSetup.h>
-#include <ompl/control/planners/rrt/RRT.h>
+#include <ompl/control/planners/prm/PRM.h>
 ///<<<CHANGE
 #include <ompl/base/spaces/SE2StateSpace.h>
 ///>>>+++
@@ -120,7 +120,7 @@ void planWithSimpleSetup(void)
 ///<<<+++
 
 ///>>>CHANGE
-  ob::PlannerPtr planner(new oc::RRT(ss.getSpaceInformation()));
+  ob::PlannerPtr planner(new oc::PRM(ss.getSpaceInformation()));
   ss.setPlanner(planner);
 ///<<<CHANGE
 
